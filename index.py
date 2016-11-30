@@ -20,7 +20,7 @@ except ImportError:
     from StringIO import StringIO
 import socket
 
-train=Train(True)
+train=Train(False)
 
 class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -65,10 +65,9 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		action = query[0]
 		if query[1]:
 			if query[1]=='train':
-				train.trainData()
+				train.trainAndSave()
 			elif query[1]=='test':
-				train.load()
-				train.test()
+				train.testAndSave()
         if f:
             self.copyfile(f, self.wfile)
             f.close()
