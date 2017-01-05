@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-
+import numpy as np
 def readCSV_hotel():
 	cluster = "data2/hotel.csv"
 	hotel = pd.read_csv(cluster)
@@ -58,12 +58,51 @@ def readCSV_food():
                 i+=1
 	return food,test
 
+def clusters_test(hotel):
+	import matplotlib.pyplot as plt
+        from sklearn.cluster import KMeans
+        scores = []
+        for i in xrange(3,80,1):
+                km = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=1,verbose=False)
+                km.fit(hotel)
+                scores.append(-km.score(hotel)/len(hotel))
+	for a,b in zip(scores,xrange(3,80,1)):
+		print b,a
+        plt.figure(figsize=(8,4))
+        plt.plot(xrange(3,80,1),scores,label="error",color="red",linewidth=1)
+        plt.xlabel("n_features")
+        plt.ylabel("error")
+        plt.legend()
+        plt.show()
+
 def clusters(hotel):
 	from sklearn.cluster import KMeans
 	random_state = 170
-	y_pred = KMeans(n_clusters=3, random_state=random_state).fit_predict(hotel)
+	y_pred = KMeans(n_clusters=5, random_state=random_state).fit_predict(hotel)
 	return y_pred
 
+def regression_test(X,Y,testx):
+	from sklearn.linear_model import LinearRegression
+	from sklearn import cross_validation
+	from sklearn.model_selection import cross_val_score
+	from sklearn.metrics import mean_squared_error
+	from math import sqrt
+	X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, Y, test_size=0.4, random_state=0)
+	print 'Linear'
+	clf = LinearRegression()
+	clf.fit(X_train,y_train)
+	res = 0  
+	#for a,b in zip(list(y_test),clf.predict(X_test)):
+	#	res+=np.log(a)-np.log(b)	
+	print sqrt(mean_squared_error(list(y_test),clf.predict(X_test)))
+	#print cross_val_score(clf, X, Y, cv=10)
+	from sklearn.tree import DecisionTreeRegressor
+	print 'Decision'
+	clf = DecisionTreeRegressor(random_state=0)
+	clf.fit(X_train,y_train)
+	print sqrt(mean_squared_error(list(y_test),clf.predict(X_test)))
+	#print cross_val_score(clf, X, Y, cv=10)
+	
 def regression(x,y,testx):
 	from sklearn.linear_model import LinearRegression
 	lr = LinearRegression()
@@ -74,11 +113,29 @@ def regression(x,y,testx):
 if __name__ == '__main__':
 	hotel,hotel_test = readCSV_hotel()
 	regex = 'hotel_id|caixi|format|fast_hotel|num_of_table|num_of_seat|num_of_waiter|num_of_foodcate|num_of_food|num_of_member|num_of_printer|num_of_printer_net|num_of_printer_drv'
+	'''
+	#hotel = hotel.filter(regex=regex)
+	#clusters_test(hotel)
+	
+	hotel_id = hotel.drop_duplicates(['hotel_id'])[0:250]
+	hotel = hotel[hotel['hotel_id'].isin(hotel_id['hotel_id'])]
+	regexs = regex+'|dayofweek'
+	regression_test(hotel.filter(regex=regexs),hotel['total_need_money'],hotel_test.filter(regex=regexs))
+	hotel = hotel.filter(regex=regex)
+        hotel['cluster'] = clusters(hotel)
+	hotel = hotel.filter(regex='hotel_id|cluster').drop_duplicates(['hotel_id'])
+	print len(hotel)
+	food,food_test = readCSV_food()
+	food = food[food['hotel_id'].isin(hotel['hotel_id'])]
+        food = pd.merge(food,hotel,on='hotel_id')
+	food.to_csv('data2/food_result')
+	regression_test(food.filter(regex=regexs),food['total_num'],food_test.filter(regex=regexs))
+        regexs = 'hotel_id|food_id|unit_money|cate_code|dayofweek|cluster'
+	'''
 	regexs = regex+'|dayofweek'
 	pred = regression(hotel.filter(regex=regexs),hotel['total_need_money'],hotel_test.filter(regex=regexs))
 	hotel_test['total_need_money']=pred
 	hotel_test.to_csv('result/hotel.predict')
-	
 	hotel = hotel.filter(regex=regex)
 	hotel['cluster'] = clusters(hotel)
 	hotel = hotel.filter(regex='hotel_id|cluster').drop_duplicates(['hotel_id'])

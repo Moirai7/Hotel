@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 f = open('hotel_daily.csv')
 f2 = open('hotel_predict','w')
 
@@ -82,3 +81,12 @@ while st:
                 f2.write(','.join(s))
 f.close()
 f2.close()
+'''
+f= open('food_predict')
+st = f.readline()
+while st:
+	st = f.readline()
+	if st:
+		st = st.strip('\n').split(',')
+f.close()
+'''
